@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    depends_on:
+      - mongodb
+      - redis
+
+  secure-api:
+    build: ./secure-api
+    container_name: secure-api
+    ports:
+      - "8001:8001"
+    networks:
+      - app-network
+    depends_on:
+      - auth-service
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
